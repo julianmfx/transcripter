@@ -1,6 +1,19 @@
 
 # Secrets
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+id_rsa
+id_rsa.*
+credentials*
+.netrc
+.pypirc
+.npmrc
 
 # Directory structure
 voice-notes/*
