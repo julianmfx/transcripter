@@ -98,7 +98,9 @@ mapfile -t txt_files < <(find "$first_dir" -maxdepth 1 -name '*.txt' ! -name 'tr
 
 output_file="$first_dir/transcription.txt"
 
-if [ ${#txt_files[@]} -gt 1 ]; then
+if [ ${#txt_files[@]} -eq 1 ]; then
+    cp "$first_dir/${txt_files[0]}" "$output_file"
+elif [ ${#txt_files[@]} -gt 1 ]; then
     echo ""
     echo "Found ${#txt_files[@]} transcription files:"
     for f in "${txt_files[@]}"; do
@@ -136,6 +138,7 @@ if [ -f "$output_file" ]; then
             exit 1
         fi
 
+        _ts_marker="$(mktemp)"
         docker run --rm -i \
             -v "$first_dir:/data" \
             -v "$OBSIDIAN_VAULT:/vault" \
@@ -144,5 +147,30 @@ if [ -f "$output_file" ]; then
             --entrypoint python \
             "$IMAGE_NAME" \
             /app/process.py /data/transcription.txt
+
+        obsidian_file="$(find "$OBSIDIAN_VAULT" -maxdepth 1 -name "*.md" -newer "$_ts_marker" -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)"
+        rm "$_ts_marker"
+    fi
+fi
+
+# Archive voice notes and transcripts
+if [ -n "${obsidian_file:-}" ]; then
+    note_title="$(head -1 "$obsidian_file" | sed 's/^# //')"
+    script_dir="$(cd "$(dirname "$0")" && pwd)"
+
+    archive_files=()
+    for f in "$@"; do
+        abs="$(realpath "$f" 2>/dev/null)" || continue
+        [ -f "$abs" ] && archive_files+=("$abs")
+    done
+    for f in "${txt_files[@]}"; do
+        [ -f "$first_dir/$f" ] && archive_files+=("$first_dir/$f")
+    done
+    [ -f "$output_file" ] && archive_files+=("$output_file")
+
+    echo ""
+    read -rp "Archive files to notes/$note_title/? [y/N] " answer
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        bash "$script_dir/archive.sh" "$note_title" "$script_dir/notes" "${archive_files[@]}"
     fi
 fi
