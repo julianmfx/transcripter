@@ -1,0 +1,6 @@
+
+# Directory structure
+voice-notes/*
+!voice-notes/.gitkeep
+notes/*
+!notes/.gitkeep
