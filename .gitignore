@@ -1,4 +1,7 @@
 
+# Secrets
+.env
+
 # Directory structure
 voice-notes/*
 !voice-notes/.gitkeep
