@@ -20,3 +20,6 @@ voice-notes/*
 !voice-notes/.gitkeep
 notes/*
 !notes/.gitkeep
+
+# pytest
+*.pyc
